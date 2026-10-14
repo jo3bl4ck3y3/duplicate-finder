@@ -136,7 +136,7 @@ class DuplicateFinderApp:
         self.master = master
         master.title("Doppelte Dateien finden")
         master.geometry("1000x600")
-        master.minsize(700, 400)
+        master.minsize(920, 400)
 
         self.directory = tk.StringVar(value=os.path.expanduser("~"))
         self.min_size_kb = tk.StringVar(value="0")
@@ -172,7 +172,6 @@ class DuplicateFinderApp:
                         variable=self.use_trash).pack(side="left")
 
         tree_frame = ttk.Frame(self.master, padding=(8, 0))
-        tree_frame.pack(fill="both", expand=True)
         columns = ("mark", "size", "modified", "path")
         self.tree = ttk.Treeview(tree_frame, columns=columns, show="tree headings", selectmode="extended")
         self.tree.heading("#0", text="Gruppe")
@@ -203,19 +202,23 @@ class DuplicateFinderApp:
         self.tree.bind("<Delete>", lambda e: self.delete_checked())
 
         actions = ttk.Frame(self.master, padding=8)
-        actions.pack(fill="x")
+        # Zuerst packen, damit der Löschen-Knopf auch bei schmalem Fenster sichtbar bleibt
+        self.delete_button = ttk.Button(actions, text="Markierte löschen", command=self.delete_checked)
+        self.delete_button.pack(side="right")
         ttk.Button(actions, text="Alle außer erster markieren", command=self.mark_all_but_first).pack(side="left")
         ttk.Button(actions, text="Ältere markieren (neueste behalten)", command=self.mark_older).pack(side="left", padx=4)
         ttk.Button(actions, text="Markierung aufheben", command=self.unmark_all).pack(side="left")
         ttk.Button(actions, text="Ordner öffnen", command=self.open_folder).pack(side="left", padx=4)
-        self.delete_button = ttk.Button(actions, text="Markierte löschen", command=self.delete_checked)
-        self.delete_button.pack(side="right")
 
         bottom = ttk.Frame(self.master, padding=(8, 0, 8, 8))
-        bottom.pack(fill="x")
         self.progress = ttk.Progressbar(bottom, mode="determinate", length=200)
         self.progress.pack(side="right")
         ttk.Label(bottom, textvariable=self.status, anchor="w").pack(side="left", fill="x", expand=True)
+
+        # Untere Leisten zuerst packen, damit sie bei kleinem Fenster sichtbar bleiben
+        bottom.pack(side="bottom", fill="x")
+        actions.pack(side="bottom", fill="x")
+        tree_frame.pack(fill="both", expand=True)
 
     def choose_directory(self):
         path = filedialog.askdirectory(initialdir=self.directory.get() or os.path.expanduser("~"),
