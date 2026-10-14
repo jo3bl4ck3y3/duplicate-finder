@@ -49,7 +49,7 @@ def file_hash(path, partial=False):
     return h.hexdigest()
 
 
-def find_duplicates(root, min_size=1, include_hidden=False, progress=None, cancel=None):
+def find_duplicates(root, min_size=1, include_hidden=False, progress=None, cancel=None, recursive=True):
     """Liefert eine Liste von Gruppen (Listen von Pfaden) mit identischem Inhalt.
 
     Vorgehen: erst nach Größe gruppieren, dann nach Hash des Dateianfangs,
@@ -64,6 +64,8 @@ def find_duplicates(root, min_size=1, include_hidden=False, progress=None, cance
     for dirpath, dirnames, filenames in os.walk(root):
         if cancel.is_set():
             return []
+        if not recursive:
+            dirnames[:] = []
         if not include_hidden:
             dirnames[:] = [d for d in dirnames if not d.startswith(".")]
             filenames = [f for f in filenames if not f.startswith(".")]
@@ -140,6 +142,7 @@ class DuplicateFinderApp:
 
         self.directory = tk.StringVar(value=os.path.expanduser("~"))
         self.min_size_kb = tk.StringVar(value="0")
+        self.recursive = tk.BooleanVar(value=True)
         self.include_hidden = tk.BooleanVar(value=False)
         self.use_trash = tk.BooleanVar(value=True)
         self.status = tk.StringVar(value="Verzeichnis wählen und „Suchen“ klicken.")
@@ -167,8 +170,9 @@ class DuplicateFinderApp:
         opts.pack(fill="x")
         ttk.Label(opts, text="Mindestgröße (KB):").pack(side="left")
         ttk.Spinbox(opts, from_=0, to=10_000_000, width=8, textvariable=self.min_size_kb).pack(side="left", padx=4)
-        ttk.Checkbutton(opts, text="Versteckte Dateien einbeziehen", variable=self.include_hidden).pack(side="left", padx=12)
-        ttk.Checkbutton(opts, text="In den Papierkorb verschieben statt endgültig löschen",
+        ttk.Checkbutton(opts, text="Unterordner", variable=self.recursive).pack(side="left", padx=(12, 0))
+        ttk.Checkbutton(opts, text="Versteckte Dateien", variable=self.include_hidden).pack(side="left", padx=12)
+        ttk.Checkbutton(opts, text="In den Papierkorb verschieben",
                         variable=self.use_trash).pack(side="left")
 
         tree_frame = ttk.Frame(self.master, padding=(8, 0))
@@ -250,6 +254,7 @@ class DuplicateFinderApp:
         self.progress.configure(value=0)
         self.status.set("Suche läuft …")
         include_hidden = self.include_hidden.get()
+        recursive = self.recursive.get()
 
         def progress(msg, frac=None):
             self.queue.put(("progress", msg, frac))
@@ -257,7 +262,7 @@ class DuplicateFinderApp:
         def run():
             start = time.monotonic()
             try:
-                groups = find_duplicates(root, min_size, include_hidden, progress, self.cancel_event)
+                groups = find_duplicates(root, min_size, include_hidden, progress, self.cancel_event, recursive)
                 self.queue.put(("done", groups, time.monotonic() - start))
             except Exception as exc:  # noqa: BLE001 – Fehler in der GUI anzeigen
                 self.queue.put(("error", str(exc), None))

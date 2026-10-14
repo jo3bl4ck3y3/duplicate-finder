@@ -25,6 +25,8 @@ python3 duplicate_finder.py ~/Bilder   # Startverzeichnis vorgeben
 
 1. Verzeichnis eintragen oder über **Durchsuchen …** wählen, dann **Suchen**
    (während der Suche wird der Knopf zu **Abbrechen**).
+   Unterordner werden mit durchsucht; wer nur den gewählten Ordner selbst
+   prüfen will, entfernt den Haken bei **Unterordner**.
 2. Doppelte Dateien erscheinen in Gruppen mit Größe, Änderungsdatum und Pfad.
 3. Markieren:
    - Klick in die Spalte **Markiert** schaltet eine Datei um,
